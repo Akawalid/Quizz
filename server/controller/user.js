@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userModel = require('../model/user');
+require('dotenv').config();
 
 const add_user = (email, password, role, username) => {
     return userModel.findOne({email: email})
@@ -58,39 +59,32 @@ const get_all_users = () => {
     })
 }
 
-const user_connection = (email, password) => {
-    return userModel.findOne({email: email})
-    .then(user => {
-        if(!user){
-            return {message: "email not found!", status:404}
-            //res.status(404).json({message: "email not found!"});
-        } else {
-            bcrypt.compare(password, user.password, (err, result) => {
-                if(err){
-                    return {message: "auth failed.", status: 401};
-                }
+const user_connection = async (email, password) => {
+    try {
+        const user = await userModel.findOne({ email });
 
-                if(result){
-                    const token =  jwt.sign({
-                        email: req.body.email
-                    }, 
-                    process.env.PRIVATE_KEY, 
-                    {
-                        expiresIn: "1h"
-                    }, 
-                    )
-                    //return res.status(200).json({token: token, message: "auth succesfuly.", succeed: true});
-                    return {token: token, message: "auth succesfuly.", status:200}
-                } 
-                
-                //return res.status(500).json({message: "auth failed.", succeed:false})
-                return {message: "auth failed.", status: 500} 
-            })
+        if (!user) {
+            return { message: "Email not found!", status: 404 };
         }
-    })
-    .catch(err => {
-       return {error: err, status: 500}
-})}
+
+        const result = await bcrypt.compare(password, user.password);
+
+        if (result) {
+            const token = jwt.sign(
+                { email },
+                process.env.SECRET_KEY,
+                { expiresIn: "1h" }
+            );
+
+            return { token, message: "Auth successful.", status: 200 };
+        } else {
+            return { message: "Auth failed.", status: 401 };
+        }
+    } catch (error) {
+        return { error: error.message, status: 500 };
+    }
+};
+
 
 module.exports = {
     get_all_users, 

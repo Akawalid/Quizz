@@ -4,7 +4,7 @@ const quizz_router = require('./routes/add_quizz')
 const cors = require('cors');
 const morgan = require('morgan');
 const bodyParser = require("body-parser");
-
+require('dotenv').config();
 const mongoose = require('mongoose');
 mongoose.connect(process.env.MONGODB_DATABASE_LINK);
 
